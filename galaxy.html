@@ -250,50 +250,65 @@
             history: [],
         };
 
-        const GALAXY_RADIUS = 800;
-        const NUM_STARS = 150000;
-        const GALAXY_THICKNESS = 70;
-        const HOME_POSITION = new THREE.Vector3(0, 700, 1100);
+        const GALAXY_RADIUS = 2000;
+        const NUM_STARS = 200000;
+        const GALAXY_THICKNESS = 150;
+        const HOME_POSITION = new THREE.Vector3(0, 1800, 2800);
 
         const realStarData = [
-            // Local Bubble / Orion Arm
-            { id: 0, name: 'Sol', position: new THREE.Vector3(352, 0, 0), planets: ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune'], description: 'The home system of humanity, located in the Orion Arm of the Milky Way.' },
-            { id: 1, name: 'Alpha Centauri', position: new THREE.Vector3(345.6, 1.6, 3.2), planets: ['Proxima Centauri b'], description: 'The closest star system to Sol.' },
-            { id: 2, name: 'Sirius', position: new THREE.Vector3(340.8, -3.2, -8), planets: ['Sirius B (White Dwarf)'], description: 'The brightest star in the Earth\'s night sky.' },
-            { id: 6, name: 'Barnard\'s Star', position: new THREE.Vector3(355.2, 8, -4.8), planets: ['Barnard\'s Star b (disproven)'], description: 'A nearby red dwarf star.' },
-            { id: 10, name: 'Procyon', position: new THREE.Vector3(358, 2, -1.5), planets: ['Procyon B (White Dwarf)'], description: 'A nearby binary star system, the brightest star in Canis Minor.' },
-            { id: 11, name: 'Altair', position: new THREE.Vector3(360, -1, 0.5), planets: ['Rapidly rotating star'], description: 'The brightest star in the constellation Aquila and one of the vertices of the Summer Triangle.' },
-            { id: 18, name: 'Fomalhaut', position: new THREE.Vector3(356, 1, -2), planets: ['Debris disk', 'Fomalhaut b (Dagon)'], description: 'A young, bright star in the southern constellation of Piscis Austrinus.' },
-            { id: 21, name: 'TRAPPIST-1', position: new THREE.Vector3(358, 2, -1), planets: ['7 terrestrial planets'], description: 'An ultra-cool red dwarf star, notable for its system of seven Earth-sized rocky planets.' },
+            // id, name, position, planets, description
+            // Recalculated for GALAXY_RADIUS = 2000
+            // Our local neighborhood (Orion Arm)
+            { id: 0, name: 'Sol', position: new THREE.Vector3(880, 0, 0), planets: ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune'], description: 'The home system of humanity, located in the Orion Arm of the Milky Way.' },
+            { id: 1, name: 'Alpha Centauri', position: new THREE.Vector3(878, 2, 4), planets: ['Proxima Centauri b'], description: 'The closest star system to Sol.' },
+            { id: 2, name: 'Sirius', position: new THREE.Vector3(875, -4, -10), planets: ['Sirius B (White Dwarf)'], description: 'The brightest star in the Earth\'s night sky.' },
+            { id: 6, name: 'Barnard\'s Star', position: new THREE.Vector3(882, 10, -6), planets: ['Barnard\'s Star b (disproven)'], description: 'A nearby red dwarf star.' },
+            { id: 10, name: 'Procyon', position: new THREE.Vector3(885, 2.5, -2), planets: ['Procyon B (White Dwarf)'], description: 'A nearby binary star system, the brightest star in Canis Minor.' },
+            { id: 11, name: 'Altair', position: new THREE.Vector3(888, -1.5, 1), planets: ['Rapidly rotating star'], description: 'The brightest star in the constellation Aquila and one of the vertices of the Summer Triangle.' },
+            { id: 18, name: 'Fomalhaut', position: new THREE.Vector3(883, 1.5, -2.5), planets: ['Debris disk', 'Fomalhaut b (Dagon)'], description: 'A young, bright star in the southern constellation of Piscis Austrinus.' },
+            { id: 21, name: 'TRAPPIST-1', position: new THREE.Vector3(885, 2.5, -1.5), planets: ['7 terrestrial planets'], description: 'An ultra-cool red dwarf star, notable for its system of seven Earth-sized rocky planets.' },
+            { id: 23, name: 'Epsilon Eridani', position: new THREE.Vector3(876, -1, -1), planets: ['Epsilon Eridani b'], description: 'A nearby Sun-like star with a confirmed exoplanet.' },
+            { id: 24, name: 'Tau Ceti', position: new THREE.Vector3(878, 1, 1), planets: ['4 suspected exoplanets'], description: 'A Sun-like star, relatively close, and a popular target in the search for extraterrestrial life.' },
+            { id: 25, name: 'Luyten\'s Star', position: new THREE.Vector3(881, -2, 2), planets: ['GJ 273b', 'GJ 273c'], description: 'A red dwarf with two known planets, one of which is a super-Earth in the habitable zone.' },
+            { id: 26, name: 'Kapteyn\'s Star', position: new THREE.Vector3(879, 3, -3), planets: ['Kapteyn b', 'Kapteyn c'], description: 'A nearby red subdwarf, one of the oldest stars in the galaxy, with a potential super-Earth.' },
 
-            // Further in Orion Arm
-            { id: 3, name: 'Vega', position: new THREE.Vector3(376, 12.8, -32), planets: ['Suspected debris disk'], description: 'A bright blue star in the constellation of Lyra.' },
-            { id: 7, name: 'Betelgeuse', position: new THREE.Vector3(450, 40, 100), planets: ['Supergiant Phase'], description: 'A massive red supergiant in the constellation of Orion, expected to go supernova.' },
-            { id: 8, name: 'Rigel', position: new THREE.Vector3(480, -30, -80), planets: ['Rigel B', 'Rigel C'], description: 'A blue-white supergiant, also in Orion, and one of the most luminous stars known.' },
-            { id: 14, name: 'Aldebaran', position: new THREE.Vector3(400, 20, 20), planets: ['Aldebaran b (gas giant)'], description: 'An orange giant star, the "eye" of the bull in the constellation Taurus.' },
-            { id: 13, name: 'Capella', position: new THREE.Vector3(410, 10, 10), planets: ['Two binary pairs'], description: 'A quadruple star system and the brightest star in the constellation Auriga.' },
-            { id: 20, name: 'Castor', position: new THREE.Vector3(420, -12, 6), planets: ['Sextuple star system'], description: 'The second-brightest star in Gemini, a complex system of six stars.' },
-            { id: 17, name: 'Pollux', position: new THREE.Vector3(415, -10, 4), planets: ['Pollux b (Thestias)'], description: 'An orange giant star in the constellation Gemini.' },
+            // Further out in the Orion Arm
+            { id: 3, name: 'Vega', position: new THREE.Vector3(940, 16, -40), planets: ['Suspected debris disk'], description: 'A bright blue star in the constellation of Lyra.' },
+            { id: 7, name: 'Betelgeuse', position: new THREE.Vector3(1125, 50, 125), planets: ['Supergiant Phase'], description: 'A massive red supergiant in the constellation of Orion, expected to go supernova.' },
+            { id: 8, name: 'Rigel', position: new THREE.Vector3(1200, -38, -100), planets: ['Rigel B', 'Rigel C'], description: 'A blue-white supergiant, also in Orion, and one of the most luminous stars known.' },
+            { id: 14, name: 'Aldebaran', position: new THREE.Vector3(1000, 25, 25), planets: ['Aldebaran b (gas giant)'], description: 'An orange giant star, the "eye" of the bull in the constellation Taurus.' },
+            { id: 13, name: 'Capella', position: new THREE.Vector3(1025, 12, 12), planets: ['Two binary pairs'], description: 'A quadruple star system and the brightest star in the constellation Auriga.' },
+            { id: 20, name: 'Castor', position: new THREE.Vector3(1050, -15, 8), planets: ['Sextuple star system'], description: 'The second-brightest star in Gemini, a complex system of six stars.' },
+            { id: 17, name: 'Pollux', position: new THREE.Vector3(1038, -12, 5), planets: ['Pollux b (Thestias)'], description: 'An orange giant star in the constellation Gemini.' },
+            { id: 27, name: 'Pleiades Cluster', position: new THREE.Vector3(1100, 15, -10), planets: ['Star cluster'], description: 'A famous open star cluster, also known as the Seven Sisters, containing hot blue and extremely luminous stars.' },
+            { id: 28, name: 'Alnitak', position: new THREE.Vector3(1220, -5, -8), planets: ['Triple star system'], description: 'The easternmost star in the Belt of Orion.' },
+            { id: 29, name: 'Alnilam', position: new THREE.Vector3(1225, -5, -9), planets: ['Blue supergiant'], description: 'The central star of Orion\'s Belt.' },
+            { id: 30, name: 'Mintaka', position: new THREE.Vector3(1230, -5, -10), planets: ['Multiple star system'], description: 'The westernmost star of Orion\'s Belt.' },
 
             // Perseus Arm
-            { id: 12, name: 'Deneb', position: new THREE.Vector3(-600, 40, -20), planets: ['Unconfirmed'], description: 'A distant and extremely luminous blue-white supergiant, part of the Summer Triangle.' },
+            { id: 12, name: 'Deneb', position: new THREE.Vector3(-1500, 50, -25), planets: ['Unconfirmed'], description: 'A distant and extremely luminous blue-white supergiant, part of the Summer Triangle.' },
+            { id: 31, name: 'Crab Pulsar', position: new THREE.Vector3(-1600, 10, 10), planets: ['Neutron star'], description: 'A young neutron star at the center of the Crab Nebula, a remnant of a supernova observed in 1054 AD.' },
+            { id: 32, name: 'Eta Carinae', position: new THREE.Vector3(-1800, -20, 20), planets: ['Colliding stellar winds'], description: 'A highly luminous hypergiant star system. It has a history of dramatic outbursts and is expected to explode as a supernova.' },
 
             // Sagittarius Arm (towards Galactic Center)
-            { id: 15, name: 'Antares', position: new THREE.Vector3(150, 16, 16), planets: ['Antares B'], description: 'A massive red supergiant and the brightest star in the constellation of Scorpius.' },
-            { id: 16, name: 'Spica', position: new THREE.Vector3(200, -4, -4), planets: ['Binary companion'], description: 'A spectroscopic binary and rotating ellipsoidal variable star in the constellation Virgo.' },
-            { id: 19, name: 'Regulus', position: new THREE.Vector3(250, -10, -10), planets: ['Multiple star system'], description: 'The brightest star in the constellation Leo, located almost exactly on the ecliptic.' },
-            { id: 22, name: 'Kepler-186f', position: new THREE.Vector3(200, 4, -10), planets: ['Kepler-186f and 4 others'], description: 'The first rocky planet discovered within the habitable zone of another star.' },
+            { id: 15, name: 'Antares', position: new THREE.Vector3(375, 20, 20), planets: ['Antares B'], description: 'A massive red supergiant and the brightest star in the constellation of Scorpius.' },
+            { id: 16, name: 'Spica', position: new THREE.Vector3(500, -5, -5), planets: ['Binary companion'], description: 'A spectroscopic binary and rotating ellipsoidal variable star in the constellation Virgo.' },
+            { id: 19, name: 'Regulus', position: new THREE.Vector3(625, -12, -12), planets: ['Multiple star system'], description: 'The brightest star in the constellation Leo, located almost exactly on the ecliptic.' },
+            { id: 22, name: 'Kepler-186f System', position: new THREE.Vector3(500, 5, -12), planets: ['Kepler-186f and 4 others'], description: 'The first rocky planet discovered within the habitable zone of another star.' },
+            { id: 33, name: 'Pistol Star', position: new THREE.Vector3(100, 5, 5), planets: ['Luminous blue variable'], description: 'One of the most luminous stars known, located near the Galactic Center.' },
+            { id: 34, 'name': 'Sagittarius A*', 'position': new THREE.Vector3(0, 0, 0), 'planets': ['Supermassive Black Hole'], 'description': 'The supermassive black hole at the center of the Milky Way galaxy.' },
 
-            // Far-flung / Outer Rim
-            { id: 4, name: 'Arcturus', position: new THREE.Vector3(-700, 50, 16), planets: ['Unconfirmed'], description: 'A red giant star in the constellation of Boötes.' },
-            { id: 9, name: 'Canopus', position: new THREE.Vector3(600, -10, 60), planets: ['Unconfirmed'], description: 'The second-brightest star in the night sky, located in the southern constellation of Carina.' },
-            { id: 5, name: 'Polaris', position: new THREE.Vector3(512, 640, -80), planets: ['Polaris Ab', 'Polaris B'], description: 'The current northern pole star, located far above the galactic plane.' },
+            // Far-flung / Outer Rim & Other
+            { id: 4, name: 'Arcturus', position: new THREE.Vector3(-1750, 62, 20), planets: ['Unconfirmed'], description: 'A red giant star in the constellation of Boötes.' },
+            { id: 9, name: 'Canopus', position: new THREE.Vector3(1500, -12, 75), planets: ['Unconfirmed'], description: 'The second-brightest star in the night sky, located in the southern constellation of Carina.' },
+            { id: 5, name: 'Polaris', position: new THREE.Vector3(1280, 800, -100), planets: ['Polaris Ab', 'Polaris B'], description: 'The current northern pole star, located far above the galactic plane.' },
+            { id: 35, 'name': 'R136a1', 'position': new THREE.Vector3(-1900, 30, -30), 'planets': ['Wolf-Rayet star'], 'description': 'The most massive and most luminous known star, located in the Large Magellanic Cloud, a satellite galaxy of the Milky Way.' }
         ];
 
-
+        // ... (rest of the code is identical) ...
         function init() {
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 8000);
             camera.position.copy(HOME_POSITION);
 
             const canvas = document.getElementById('galaxy-canvas');
@@ -313,7 +328,7 @@
             controls.dampingFactor = 0.05;
             controls.enableZoom = false;
             controls.minDistance = 1;
-            controls.maxDistance = 3000;
+            controls.maxDistance = 8000;
             controls.maxPolarAngle = Math.PI;
 
             createSkybox();
@@ -347,12 +362,12 @@
 
         function createSkybox() {
             const positions = [];
-            for (let i = 0; i < 3000; i++) {
-                positions.push((Math.random() - 0.5) * 4000, (Math.random() - 0.5) * 4000, (Math.random() - 0.5) * 4000);
+            for (let i = 0; i < 4000; i++) {
+                positions.push((Math.random() - 0.5) * 10000, (Math.random() - 0.5) * 10000, (Math.random() - 0.5) * 10000);
             }
             const geometry = new THREE.BufferGeometry();
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({ color: 0xffffff, size: 2, sizeAttenuation: false });
+            const material = new THREE.PointsMaterial({ color: 0xffffff, size: 3, sizeAttenuation: false });
             const sky = new THREE.Points(geometry, material);
             scene.add(sky);
         }
@@ -369,7 +384,7 @@
                     const arm = Math.floor(Math.random() * 4);
                     const armAngle = (arm / 4) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
                     const randomTheta = Math.random() * Math.PI * 2;
-                    const randomDist = (Math.random() - 0.5) * (dist * 0.2);
+                    const randomDist = (Math.random() - 0.5) * (dist * 0.25);
 
                     const bulgeFactor = Math.exp(-Math.pow(dist / (GALAXY_RADIUS * 0.3), 2));
                     const y = (Math.random() - 0.5) * (GALAXY_THICKNESS + bulgeFactor * GALAXY_THICKNESS * 4);
@@ -380,7 +395,7 @@
                     positions.push(x, y, z);
                     const mixedColor = colorInside.clone().lerp(colorOutside, dist / GALAXY_RADIUS);
                     colors.push(mixedColor.r, mixedColor.g, mixedColor.b);
-                    sizes.push(Math.random() * size + 1.0);
+                    sizes.push(Math.random() * size + 1.5);
                 }
 
                 const geometry = new THREE.BufferGeometry();
@@ -401,7 +416,7 @@
 
             const numLayers = 8;
             for (let i = 0; i < numLayers; i++) {
-                const layer = createParticleLayer(NUM_STARS / numLayers, 2.5, starMaterial);
+                const layer = createParticleLayer(NUM_STARS / numLayers, 3.0, starMaterial);
                 galaxyLayers.push(layer);
                 galaxyGroup.add(layer);
             }
@@ -424,7 +439,7 @@
             realStarData.forEach(systemData => {
                 starSystems.push(systemData);
                 const sprite = new THREE.Sprite(spriteMaterial.clone());
-                sprite.scale.set(25, 25, 1);
+                sprite.scale.set(35, 35, 1); // Slightly larger sprites for better visibility
                 sprite.position.copy(systemData.position);
                 sprite.userData = systemData;
                 selectableSystems.push(sprite);
@@ -629,9 +644,9 @@
             const distance = startPos.distanceTo(endPos);
 
             let t = 0;
-            let duration = customDuration !== null ? customDuration : Math.max(0.4, Math.min(distance / 4000, 1.5));
+            let duration = customDuration !== null ? customDuration : Math.max(0.3, Math.min(distance / 8000, 1.2));
             if (isBoosted) {
-                duration /= 2.5;
+                duration /= 3.0;
             }
 
             function animateLoop() {
@@ -666,9 +681,9 @@
             const startPos = camera.position.clone();
             const endPos = targetPosition.clone().add(new THREE.Vector3(40, 20, 40));
             let t = 0;
-            let duration = 1.2;
+            let duration = 1.0;
             if (isBoosted) {
-                duration /= 2.5;
+                duration /= 3.0;
             }
 
             warpParticles.material.opacity = 1.0;
@@ -750,11 +765,6 @@
         function setupUI() {
             const searchInput = document.getElementById('search-input');
             const searchResults = document.getElementById('search-results');
-            const infoPanel = document.getElementById('info-panel');
-            const menuBtn = document.getElementById('menu-btn');
-            const closePanelBtn = document.getElementById('close-panel-btn');
-            const helpPanel = document.getElementById('help-panel');
-            const closeHelpBtn = document.getElementById('close-help-btn');
 
             updateInfoPanel(null);
 
@@ -806,9 +816,10 @@
                 }
             });
 
-            menuBtn.addEventListener('click', () => infoPanel.classList.remove('-translate-x-[120%]'));
-            closePanelBtn.addEventListener('click', () => infoPanel.classList.add('-translate-x-[120%]'));
-            closeHelpBtn.addEventListener('click', () => {
+            document.getElementById('menu-btn').addEventListener('click', () => document.getElementById('info-panel').classList.remove('-translate-x-[120%]'));
+            document.getElementById('close-panel-btn').addEventListener('click', () => document.getElementById('info-panel').classList.add('-translate-x-[120%]'));
+            document.getElementById('close-help-btn').addEventListener('click', () => {
+                const helpPanel = document.getElementById('help-panel');
                 helpPanel.style.opacity = '0';
                 setTimeout(() => helpPanel.style.display = 'none', 500);
             });
