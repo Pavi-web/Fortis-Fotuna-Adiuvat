@@ -275,7 +275,7 @@ const Login = ({ onLogin, onSwitchToSignup }: {
         `}</style>
         
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🌌</div>
+          <img src="./samples/fortis1.jpg" alt="Logo" style={{ width: '50px' }}/>
           <h1 style={{
             color: 'white',
             fontSize: '32px',

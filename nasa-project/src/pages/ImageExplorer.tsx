@@ -54,7 +54,8 @@ const ImageExplorer = () => {
           <ul>
             <li>🖱️ <strong>Pan:</strong> Click and drag</li>
             <li>🔍 <strong>Zoom:</strong> Scroll wheel or pinch</li>
-            <li>📍 <strong>Info:</strong> Click markers for details</li>
+            <li> ⬅️ <strong>Reset:</strong> Reset the model</li>
+            <li> 💯<strong>Full Size:</strong> Full size the model to view it more</li>
           </ul>
         </div>
       </div>
