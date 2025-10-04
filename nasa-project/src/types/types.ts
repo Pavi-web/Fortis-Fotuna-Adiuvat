@@ -14,3 +14,14 @@ export interface PlanetInfo {
   distance: string;
   fact: string;
 }
+
+export interface User {
+  email: string;
+  name: string;
+}
+
+export interface AuthFormData {
+  email: string;
+  password: string;
+  name?: string;
+}
