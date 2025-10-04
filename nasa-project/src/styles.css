@@ -1,0 +1,86 @@
+:root{
+  --bg: #f6f8fb;
+  --card: #fff;
+  --text: #0b1220;
+  --muted: #6b7280;
+  --primary: #2563eb;
+  --accent: #10b981;
+  --shadow: rgba(11,18,32,0.06);
+}
+
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{
+  margin:0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  line-height:1.45;
+  padding:24px;
+}
+
+.app{display:flex;justify-content:center}
+.container{max-width:900px;width:100%}
+
+.header h1{font-size:1.25rem;margin:0 0 6px}
+.header .muted{margin:0;color:var(--muted);font-size:0.95rem}
+
+.card{
+  background:var(--card);
+  border-radius:12px;
+  padding:20px;
+  box-shadow: 0 8px 24px var(--shadow);
+  margin-top:18px;
+}
+
+.muted{color:var(--muted)}
+
+.label{display:block;font-size:0.9rem;margin-bottom:6px}
+.input{
+  display:inline-block;
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid #e6e9ef;
+  margin-left:8px;
+  min-width:180px;
+  font-size:0.95rem;
+}
+
+.row{display:flex;align-items:center;gap:12px}
+.btn{
+  background:var(--primary);
+  color:#fff;
+  border:none;
+  padding:8px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:600;
+}
+.btn.small{padding:6px 8px;font-size:0.9rem}
+.counter{
+  min-width:48px;
+  text-align:center;
+  font-weight:700;
+  font-size:1.15rem;
+}
+
+.footer{margin-top:16px;color:var(--muted);font-size:0.95rem;text-align:center}
+
+/* Todos */
+.todo-input-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.todo-list{list-style:none;padding:0;margin:0}
+.todo-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #f0f3f7;
+  margin-bottom:8px;
+  background:#fff;
+}
+.todo-item.done .todo-text{ text-decoration:line-through; opacity:0.6 }
+.todo-text{margin-left:8px}
