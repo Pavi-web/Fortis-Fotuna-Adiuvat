@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Cosmic Explorer - Complete Prototype</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+    <script>
+        // ## 1. SCENE SETUP ##
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        camera.position.z = 25;
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // ## 2. GALAXY GENERATION ##
+        const parameters = { count: 100000, size: 0.02, radius: 15, branches: 3, spin: 1, randomness: 0.2, randomnessPower: 3, insideColor: '#ff6030', outsideColor: '#1b3984' };
+        let galaxyPoints = null;
+        let galaxyMaterial = null;
+
+        const generateGalaxy = () => {
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(parameters.count * 3);
+            const colors = new Float32Array(parameters.count * 3);
+            const colorInside = new THREE.Color(parameters.insideColor);
+            const colorOutside = new THREE.Color(parameters.outsideColor);
+
+            for (let i = 0; i < parameters.count; i++) {
+                const i3 = i * 3;
+                const radius = Math.random() * parameters.radius;
+                const spinAngle = radius * parameters.spin;
+                const branchAngle = (i % parameters.branches) / parameters.branches * Math.PI * 2;
+                const randomX = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * parameters.randomness * radius;
+                const randomY = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * parameters.randomness * radius;
+                const randomZ = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * parameters.randomness * radius;
+                positions[i3] = Math.cos(branchAngle + spinAngle) * radius + randomX;
+                positions[i3 + 1] = randomY;
+                positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
+                const mixedColor = colorInside.clone().lerp(colorOutside, radius / parameters.radius);
+                colors[i3] = mixedColor.r; colors[i3 + 1] = mixedColor.g; colors[i3 + 2] = mixedColor.b;
+            }
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            galaxyMaterial = new THREE.PointsMaterial({ size: parameters.size, sizeAttenuation: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true, transparent: true });
+            galaxyPoints = new THREE.Points(geometry, galaxyMaterial);
+            scene.add(galaxyPoints);
+            return geometry; // Return geometry for picking a target star
+        };
+        const galaxyGeometry = generateGalaxy();
+
+        // ## 3. UNIVERSE DUST GENERATION ##
+        const createUniverseDust = () => {
+            const dustParticles = 20000;
+            const dustGeometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(dustParticles * 3);
+            for (let i = 0; i < dustParticles; i++) {
+                const i3 = i * 3;
+                positions[i3] = (Math.random() - 0.5) * 200;
+                positions[i3 + 1] = (Math.random() - 0.5) * 200;
+                positions[i3 + 2] = (Math.random() - 0.5) * 200;
+            }
+            dustGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const dustMaterial = new THREE.PointsMaterial({ size: 0.05, sizeAttenuation: true, color: 0xffffff, transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending });
+            const universeDust = new THREE.Points(dustGeometry, dustMaterial);
+            scene.add(universeDust);
+        };
+        createUniverseDust();
+
+        // ## 4. STAR SYSTEM GENERATION ##
+        let solarSystem = null;
+        function createStarSystem() {
+            const starSystemGroup = new THREE.Group();
+            const sun = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffdd00 }));
+            const planet1 = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), new THREE.MeshBasicMaterial({ color: 0x0099ff }));
+            planet1.position.x = 2;
+            starSystemGroup.add(sun, planet1);
+
+            starSystemGroup.traverse((child) => {
+                if (child.isMesh) {
+                    child.material.transparent = true;
+                    child.material.opacity = 0;
+                }
+            });
+            return starSystemGroup;
+        }
+        solarSystem = createStarSystem();
+
+        // ## 5. TRANSITION LOGIC SETUP ##
+        const targetStarIndex = 5000; // Pick the 5000th star as our destination
+        const targetPosition = new THREE.Vector3();
+        targetPosition.fromBufferAttribute(galaxyGeometry.attributes.position, targetStarIndex);
+        solarSystem.position.copy(targetPosition);
+        scene.add(solarSystem);
+        const transitionStartDistance = 5;
+        const transitionEndDistance = 1;
+
+        // ## 6. ANIMATION LOOP ##
+        const clock = new THREE.Clock();
+        function animate() {
+            const elapsedTime = clock.getElapsedTime();
+
+            // Animate planets
+            if (solarSystem.children[0].material.opacity > 0) {
+                solarSystem.children[1].position.x = Math.cos(elapsedTime * 0.5) * 2;
+                solarSystem.children[1].position.z = Math.sin(elapsedTime * 0.5) * 2;
+            }
+
+            // Calculate distance from camera to target for transition
+            const distanceToTarget = camera.position.distanceTo(targetPosition);
+            const opacity = Math.max(0, Math.min(1, (distanceToTarget - transitionEndDistance) / (transitionStartDistance - transitionEndDistance)));
+
+            // Apply opacity to fade between galaxy and star system
+            galaxyMaterial.opacity = opacity;
+            solarSystem.traverse((child) => {
+                if (child.isMesh) {
+                    child.material.opacity = 1 - opacity;
+                }
+            });
+
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // ## 7. WINDOW RESIZE HANDLER ##
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

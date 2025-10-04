@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Galaxy Map</title>
+    <!-- Tailwind CSS for styling the UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for a clean, modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background-color: #00000a;
+            color: #fff;
+        }
+
+        #galaxy-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            outline: none;
+        }
+
+        .label {
+            color: #fff;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 8px;
+            border-radius: 4px;
+            pointer-events: none;
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            white-space: nowrap;
+        }
+
+        .info-panel-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .info-panel-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .info-panel-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        .info-panel-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #00000a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 0.5s ease;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-left-color: #67e8f9;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #reticle {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        #reticle::before,
+        #reticle::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        #reticle::before {
+            left: 50%;
+            top: -2px;
+            width: 1px;
+            height: 5px;
+            transform: translateX(-50%);
+        }
+
+        #reticle::after {
+            top: 50%;
+            left: -2px;
+            height: 1px;
+            width: 5px;
+            transform: translateY(-50%);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p class="mt-4 text-lg text-gray-400">Calibrating stellar cartography...</p>
+    </div>
+
+    <canvas id="galaxy-canvas"></canvas>
+    <div id="reticle"></div>
+
+    <div class="absolute top-0 left-0 w-full h-full pointer-events-none">
+        <div class="p-4 md:p-6 flex flex-col md:flex-row gap-4">
+            <div id="info-panel"
+                class="w-full md:w-80 lg:w-96 bg-gray-900 bg-opacity-80 backdrop-blur-md rounded-xl p-4 shadow-2xl pointer-events-auto transition-transform duration-500 ease-in-out -translate-x-[120%] md:translate-x-0">
+                <div class="flex items-center justify-between mb-4">
+                    <h1 class="text-2xl font-bold text-sky-300">Milky Way Voyager</h1>
+                    <button id="close-panel-btn" class="md:hidden text-gray-400 hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="relative mb-4">
+                    <input type="text" id="search-input" placeholder="Search for a star system..."
+                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    <div id="search-results"
+                        class="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg max-h-60 overflow-y-auto hidden">
+                    </div>
+                </div>
+                <div id="system-info-content" class="text-gray-300">
+                    <p class="text-center text-gray-400 italic">Select a star system to view details.</p>
+                </div>
+            </div>
+            <button id="menu-btn"
+                class="md:hidden absolute top-4 left-4 z-20 p-2 bg-gray-900 bg-opacity-70 rounded-full text-white pointer-events-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+            </button>
+            <div class="absolute top-4 right-4 md:top-6 md:right-6 flex flex-col items-end gap-2 pointer-events-auto">
+                <div class="bg-gray-900 bg-opacity-80 backdrop-blur-md rounded-lg shadow-2xl">
+                    <button id="zoom-in-btn"
+                        class="w-10 h-10 flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-700 transition-colors rounded-t-lg border-b border-gray-700">+</button>
+                    <button id="zoom-out-btn"
+                        class="w-10 h-10 flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-700 transition-colors rounded-b-lg">-</button>
+                </div>
+                <button id="reset-view-btn"
+                    class="w-10 h-10 flex items-center justify-center text-gray-300 hover:text-white bg-gray-900 bg-opacity-80 backdrop-blur-md rounded-lg shadow-2xl hover:bg-gray-700 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M5.05 3.636a1 1 0 011.414 0L10 7.172l3.536-3.536a1 1 0 111.414 1.414L11.414 8.586l3.536 3.535a1 1 0 11-1.414 1.414L10 10.414l-3.536 3.536a1 1 0 01-1.414-1.414L8.586 8.586 5.05 5.05a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+            <!-- Help Panel -->
+            <div id="help-panel"
+                class="absolute bottom-4 left-1/2 -translate-x-1/2 w-11/12 md:w-auto bg-gray-900 bg-opacity-80 backdrop-blur-md rounded-lg p-3 px-4 shadow-2xl flex items-center justify-center gap-4 pointer-events-auto transition-opacity duration-500">
+                <p class="text-sm text-gray-300 hidden md:block"><b>Left-Drag:</b> Rotate | <b>Right-Drag:</b> Pan |
+                    <b>Scroll:</b> Zoom | <b>Double-click:</b> Fly to point</p>
+                <p class="text-sm text-gray-300"><b>WASD:</b> Pan | <b>Arrows:</b> Rotate</p>
+                <button id="close-help-btn" class="text-gray-500 hover:text-white">&times;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GLSL Shaders -->
+    <script id="vertexShader" type="x-shader/x-vertex">
+        attribute float size;
+        attribute vec3 color;
+        varying vec3 vColor;
+        void main() {
+            vColor = color;
+            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+            gl_PointSize = size * (300.0 / -mvPosition.z);
+            gl_Position = projectionMatrix * mvPosition;
+        }
+    </script>
+    <script id="fragmentShader" type="x-shader/x-fragment">
+        varying vec3 vColor;
+        void main() {
+            float d = distance(gl_PointCoord, vec2(0.5, 0.5));
+            if (d > 0.5) { discard; }
+            gl_FragColor = vec4(vColor, (1.0 - d * 2.0) * 0.8);
+        }
+    </script>
+
+    <!-- three.js and controls -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        let scene, camera, renderer, labelRenderer, controls, composer;
+        let starSystems = [], selectableSystems = [];
+        let selectedSystem = null, isWarping = false;
+        let galaxyGroup, warpParticles, galaxyLayers = []; // LIVE FEEL: Array to hold rotating layers
+        const clock = new THREE.Clock();
+        const keyState = {};
+
+        const GALAXY_RADIUS = 800;
+        const NUM_STARS = 150000;
+        const GALAXY_THICKNESS = 70;
+
+        const realStarData = [
+            { id: 0, name: 'Sol', position: new THREE.Vector3(352, 0, 0), planets: ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune'], description: 'The home system of humanity, located in the Orion Arm of the Milky Way.' },
+            { id: 1, name: 'Alpha Centauri', position: new THREE.Vector3(345.6, 1.6, 3.2), planets: ['Proxima Centauri b'], description: 'The closest star system to Sol.' },
+            { id: 2, name: 'Sirius', position: new THREE.Vector3(340.8, -3.2, -8), planets: ['Sirius B (White Dwarf)'], description: 'The brightest star in the Earth\'s night sky.' },
+            { id: 3, name: 'Vega', position: new THREE.Vector3(376, 12.8, -32), planets: ['Suspected debris disk'], description: 'A bright blue star in the constellation of Lyra.' },
+            { id: 4, name: 'Arcturus', position: new THREE.Vector3(304, 24, 8), planets: ['Unconfirmed'], description: 'A red giant star in the constellation of Boötes.' },
+            { id: 5, name: 'Polaris', position: new THREE.Vector3(512, 640, -80), planets: ['Polaris Ab', 'Polaris B'], description: 'The current northern pole star.' },
+            { id: 6, name: 'Barnard\'s Star', position: new THREE.Vector3(355.2, 8, -4.8), planets: ['Barnard\'s Star b (disproven)'], description: 'A nearby red dwarf star.' }
+        ];
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
+            camera.position.set(0, 700, 1100);
+
+            const canvas = document.getElementById('galaxy-canvas');
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            labelRenderer = new CSS2DRenderer();
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.domElement.style.position = 'absolute';
+            labelRenderer.domElement.style.top = '0px';
+            labelRenderer.domElement.style.pointerEvents = 'none';
+            document.body.appendChild(labelRenderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.enableZoom = false;
+            controls.minDistance = 1;
+            controls.maxDistance = 3000;
+            controls.maxPolarAngle = Math.PI;
+
+            createSkybox();
+
+            galaxyGroup = new THREE.Group();
+            scene.add(galaxyGroup);
+
+            createGalaxy();
+            createStarSystems();
+            createWarpParticles();
+
+            setupPostProcessing();
+
+            controls.target.set(0, 0, 0);
+            controls.update();
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('keydown', (e) => keyState[e.code] = true);
+            window.addEventListener('keyup', (e) => keyState[e.code] = false);
+            renderer.domElement.addEventListener('click', onCanvasClick);
+            renderer.domElement.addEventListener('dblclick', onCanvasDoubleClick);
+            renderer.domElement.addEventListener('wheel', onCanvasMouseWheel, { passive: false });
+            setupUI();
+
+            animate();
+
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.opacity = '0';
+            setTimeout(() => loadingOverlay.style.display = 'none', 500);
+        }
+
+        function createSkybox() {
+            const positions = [];
+            for (let i = 0; i < 3000; i++) {
+                positions.push((Math.random() - 0.5) * 4000, (Math.random() - 0.5) * 4000, (Math.random() - 0.5) * 4000);
+            }
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const material = new THREE.PointsMaterial({ color: 0xffffff, size: 2, sizeAttenuation: false });
+            const sky = new THREE.Points(geometry, material);
+            scene.add(sky);
+        }
+
+        function generateDustTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(128, 128, 20, 128, 128, 128);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 256, 256);
+            for (let i = 0; i < 500; i++) {
+                ctx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.05})`;
+                ctx.beginPath();
+                ctx.arc(Math.random() * 256, Math.random() * 256, Math.random() * 25, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            for (let i = 0; i < 50; i++) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.02})`;
+                ctx.beginPath();
+                ctx.arc(Math.random() * 256, Math.random() * 256, Math.random() * 30, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            return canvas;
+        }
+
+        function createGalaxy() {
+            const createParticleLayer = (count, size, material) => {
+                const positions = []; const colors = []; const sizes = [];
+                // REALISM: Brighter, yellower core
+                const colorInside = new THREE.Color(0xffe58a);
+                // REALISM: Cooler, bluer arms
+                const colorOutside = new THREE.Color(0x89d4ff);
+
+                for (let i = 0; i < count; i++) {
+                    const dist = Math.sqrt(Math.random()) * GALAXY_RADIUS;
+                    const angle = (dist / GALAXY_RADIUS) * 10; // Looser arms
+                    const arm = Math.floor(Math.random() * 4);
+                    // REALISM: Add randomness to arm angle for a more scattered look
+                    const armAngle = (arm / 4) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+                    const randomTheta = Math.random() * Math.PI * 2;
+                    const randomDist = (Math.random() - 0.5) * (dist * 0.2); // Scatter stars off the arm's centerline
+
+                    // REALISM: Create a central bulge
+                    const bulgeFactor = Math.exp(-Math.pow(dist / (GALAXY_RADIUS * 0.3), 2));
+                    const y = (Math.random() - 0.5) * (GALAXY_THICKNESS + bulgeFactor * GALAXY_THICKNESS * 4);
+
+                    const x = Math.cos(angle + armAngle) * dist + Math.cos(randomTheta) * randomDist;
+                    const z = Math.sin(angle + armAngle) * dist + Math.sin(randomTheta) * randomDist;
+
+                    positions.push(x, y, z);
+                    const mixedColor = colorInside.clone().lerp(colorOutside, dist / GALAXY_RADIUS);
+                    colors.push(mixedColor.r, mixedColor.g, mixedColor.b);
+                    sizes.push(Math.random() * size + 1.0);
+                }
+
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+                geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+
+                return new THREE.Points(geometry, material);
+            };
+
+            const starMaterial = new THREE.ShaderMaterial({
+                uniforms: {},
+                vertexShader: document.getElementById('vertexShader').textContent,
+                fragmentShader: document.getElementById('fragmentShader').textContent,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false, transparent: true,
+            });
+
+            // LIVE FEEL: Create multiple layers for differential rotation
+            const numLayers = 8;
+            for (let i = 0; i < numLayers; i++) {
+                const layer = createParticleLayer(NUM_STARS / numLayers, 2.5, starMaterial);
+                galaxyLayers.push(layer);
+                galaxyGroup.add(layer);
+            }
+
+            const coreTexture = new THREE.CanvasTexture(generateStarTexture(true));
+            const coreMaterial = new THREE.SpriteMaterial({
+                map: coreTexture, blending: THREE.AdditiveBlending, transparent: true,
+            });
+            const coreSprite = new THREE.Sprite(coreMaterial);
+            coreSprite.scale.set(GALAXY_RADIUS * 0.6, GALAXY_RADIUS * 0.6, 1);
+            galaxyGroup.add(coreSprite);
+        }
+
+        function createStarSystems() {
+            const spriteMaterial = new THREE.SpriteMaterial({
+                map: new THREE.CanvasTexture(generateStarTexture(false)),
+                blending: THREE.AdditiveBlending,
+                depthWrite: false, transparent: true, opacity: 0.9
+            });
+            realStarData.forEach(systemData => {
+                starSystems.push(systemData);
+                const sprite = new THREE.Sprite(spriteMaterial.clone());
+                sprite.scale.set(25, 25, 1);
+                sprite.position.copy(systemData.position);
+                sprite.userData = systemData;
+                selectableSystems.push(sprite);
+                scene.add(sprite);
+            });
+        }
+
+        function generateStarTexture(isCore) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 256;
+            const context = canvas.getContext('2d');
+            const gradient = context.createRadialGradient(128, 128, 0, 128, 128, 128);
+            if (isCore) {
+                gradient.addColorStop(0, 'rgba(255, 245, 220, 1)');
+                gradient.addColorStop(0.2, 'rgba(255, 220, 180, 0.8)');
+                gradient.addColorStop(0.5, 'rgba(255, 200, 100, 0.3)');
+                gradient.addColorStop(1, 'rgba(255, 180, 50, 0)');
+            } else {
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                gradient.addColorStop(0.1, 'rgba(255, 220, 180, 1)');
+                gradient.addColorStop(0.3, 'rgba(255, 200, 100, 0.6)');
+                gradient.addColorStop(1, 'rgba(255, 180, 50, 0)');
+            }
+            context.fillStyle = gradient; context.fillRect(0, 0, 256, 256);
+            if (!isCore) {
+                context.strokeStyle = 'rgba(255, 255, 220, 0.3)'; context.lineWidth = 1.5;
+                context.beginPath(); context.moveTo(0, 128); context.lineTo(256, 128);
+                context.moveTo(128, 0); context.lineTo(128, 256); context.stroke();
+            }
+            return canvas;
+        }
+
+        function createWarpParticles() {
+            const positions = [];
+            for (let i = 0; i < 500; i++) {
+                positions.push((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2);
+            }
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, transparent: true, opacity: 0.0 });
+            warpParticles = new THREE.Points(geometry, material);
+            scene.add(warpParticles);
+        }
+
+        function setupPostProcessing() {
+            composer = new EffectComposer(renderer);
+            const renderPass = new RenderPass(scene, camera);
+            composer.addPass(renderPass);
+            const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.7, 0.4, 0.85);
+            composer.addPass(bloomPass);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onCanvasMouseWheel(event) {
+            event.preventDefault();
+            const zoomFactor = event.deltaY < 0 ? 1.2 : 1 / 1.2;
+            zoomToPoint(zoomFactor, event.clientX, event.clientY);
+        }
+
+        function zoomToPoint(zoomFactor, x, y) {
+            const mouse = new THREE.Vector2((x / window.innerWidth) * 2 - 1, -(y / window.innerHeight) * 2 + 1);
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+
+            const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+            const intersectPoint = new THREE.Vector3();
+            raycaster.ray.intersectPlane(plane, intersectPoint);
+
+            const target = intersectPoint || controls.target;
+
+            const dir = new THREE.Vector3().subVectors(camera.position, target);
+            dir.multiplyScalar(1 / zoomFactor);
+            camera.position.copy(target).add(dir);
+
+            controls.target.copy(target);
+            controls.update();
+        }
+
+
+        function handleKeyboardInput(delta) {
+            const distance = camera.position.distanceTo(controls.target);
+            const panSpeed = distance * delta * 0.5;
+            const rotateSpeed = 1.5 * delta;
+
+            const forward = new THREE.Vector3();
+            camera.getWorldDirection(forward);
+            const right = new THREE.Vector3().crossVectors(camera.up, forward).normalize();
+            const up = new THREE.Vector3().crossVectors(forward, right).normalize();
+
+            if (keyState['KeyW']) controls.target.add(up.clone().multiplyScalar(panSpeed));
+            if (keyState['KeyS']) controls.target.sub(up.clone().multiplyScalar(panSpeed));
+            if (keyState['KeyA']) controls.target.add(right.clone().multiplyScalar(panSpeed));
+            if (keyState['KeyD']) controls.target.sub(right.clone().multiplyScalar(panSpeed));
+
+            if (keyState['ArrowUp']) camera.rotateX(rotateSpeed);
+            if (keyState['ArrowDown']) camera.rotateX(-rotateSpeed);
+            if (keyState['ArrowLeft']) camera.rotateY(rotateSpeed);
+            if (keyState['ArrowRight']) camera.rotateY(-rotateSpeed);
+        }
+
+        function animate() {
+            const delta = clock.getDelta();
+            requestAnimationFrame(animate);
+            if (!isWarping) {
+                handleKeyboardInput(delta);
+                controls.update();
+                // LIVE FEEL: Animate each layer at a different speed
+                galaxyLayers.forEach((layer, i) => {
+                    layer.rotation.y += delta * (0.04 / (i * 0.5 + 1));
+                });
+            }
+            if (selectedSystem && selectedSystem.highlight) {
+                selectedSystem.highlight.lookAt(camera.position);
+                const sine = Math.sin(clock.getElapsedTime() * 3);
+                selectedSystem.highlight.material.opacity = 0.5 + sine * 0.2;
+                const scale = camera.position.distanceTo(selectedSystem.position) * 0.05;
+                selectedSystem.highlight.scale.set(scale, scale, scale);
+            }
+            composer.render(delta);
+            labelRenderer.render(scene, camera);
+        }
+
+        function onCanvasClick(event) {
+            if (event.target.closest('.pointer-events-auto') || isWarping) return;
+            const mouse = new THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(selectableSystems);
+            if (intersects.length > 0) selectSystem(intersects[0].object.userData);
+        }
+
+        function onCanvasDoubleClick(event) {
+            if (event.target.closest('.pointer-events-auto') || isWarping) return;
+            const mouse = new THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+            const intersectPoint = new THREE.Vector3();
+
+            if (raycaster.ray.intersectPlane(plane, intersectPoint)) {
+                flyToPoint(intersectPoint);
+            }
+        }
+
+        function selectSystem(system) {
+            if (selectedSystem) {
+                if (selectedSystem.label) selectedSystem.mesh.remove(selectedSystem.label);
+                if (selectedSystem.highlight) scene.remove(selectedSystem.highlight);
+            }
+            selectedSystem = system;
+
+            updateInfoPanel(system);
+            warpToSystem(system.position);
+
+            const infoPanel = document.getElementById('info-panel');
+            if (window.innerWidth < 768 && infoPanel.classList.contains('-translate-x-[120%]')) {
+                infoPanel.classList.remove('-translate-x-[120%]');
+            }
+        }
+
+        function flyToPoint(targetPosition) {
+            isWarping = true;
+            controls.enabled = false;
+
+            const startPos = camera.position.clone();
+            const startTarget = controls.target.clone();
+            const distance = startPos.distanceTo(targetPosition);
+            const endPos = targetPosition.clone().add(new THREE.Vector3(0, distance * 0.2, distance * 0.2));
+
+            let t = 0;
+            const duration = Math.max(0.5, distance / 2000);
+
+            function animateFly() {
+                t += clock.getDelta();
+                const progress = Math.min(t / duration, 1);
+                const easeProgress = 0.5 - 0.5 * Math.cos(progress * Math.PI);
+
+                camera.position.lerpVectors(startPos, endPos, easeProgress);
+                controls.target.lerpVectors(startTarget, targetPosition, easeProgress);
+
+                if (progress >= 1) {
+                    isWarping = false;
+                    controls.enabled = true;
+                    controls.update();
+                } else {
+                    requestAnimationFrame(animateFly);
+                }
+            }
+            animateFly();
+        }
+
+        function warpToSystem(targetPosition) {
+            isWarping = true;
+            controls.enabled = false;
+
+            const startPos = camera.position.clone();
+            const endPos = targetPosition.clone().add(new THREE.Vector3(40, 20, 40));
+            let t = 0;
+            const duration = 1.0;
+
+            warpParticles.material.opacity = 1.0;
+            warpParticles.position.copy(camera.position);
+
+            function animateWarp() {
+                t += clock.getDelta();
+                const progress = Math.min(t / duration, 1);
+                const easeProgress = 0.5 - 0.5 * Math.cos(progress * Math.PI);
+
+                camera.position.lerpVectors(startPos, endPos, easeProgress);
+                camera.lookAt(targetPosition);
+
+                const warpScale = 1 + progress * 50;
+                warpParticles.scale.set(warpScale, warpScale, warpScale * 200);
+
+                if (progress >= 1) {
+                    isWarping = false;
+                    controls.enabled = true;
+                    controls.target.copy(targetPosition);
+                    controls.update();
+
+                    const highlightGeo = new THREE.RingGeometry(1, 1.5, 64);
+                    const highlightMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending });
+                    const highlight = new THREE.Mesh(highlightGeo, highlightMat);
+                    selectedSystem.highlight = highlight;
+                    highlight.position.copy(targetPosition);
+                    scene.add(highlight);
+
+                    const labelDiv = document.createElement('div');
+                    labelDiv.className = 'label';
+                    labelDiv.textContent = selectedSystem.name;
+                    const label = new CSS2DObject(labelDiv);
+                    label.position.set(0, 0, 0);
+                    selectedSystem.mesh = selectableSystems.find(m => m.userData.id === selectedSystem.id);
+                    selectedSystem.mesh.add(label);
+
+                    warpParticles.material.opacity = 0.0;
+                    warpParticles.scale.set(1, 1, 1);
+                } else {
+                    requestAnimationFrame(animateWarp);
+                }
+            }
+            animateWarp();
+        }
+
+        function updateInfoPanel(system) {
+            const infoContent = document.getElementById('system-info-content');
+            infoContent.innerHTML = `<h2 class="text-xl font-bold text-sky-400 mb-2">${system.name}</h2><p class="text-sm text-gray-400 mb-4">Coordinates: ${system.position.x.toFixed(2)}, ${system.position.y.toFixed(2)}, ${system.position.z.toFixed(2)}</p><p class="mb-4">${system.description}</p><h3 class="font-semibold text-lg text-sky-300 mb-2">Known Planets & Bodies (${system.planets.length})</h3><ul class="list-disc list-inside space-y-1 max-h-48 overflow-y-auto pr-2 info-panel-scrollbar">${system.planets.map(p => `<li>${p}</li>`).join('')}</ul>`;
+        }
+
+        function setupUI() {
+            const searchInput = document.getElementById('search-input');
+            const searchResults = document.getElementById('search-results');
+            const infoPanel = document.getElementById('info-panel');
+            const menuBtn = document.getElementById('menu-btn');
+            const closePanelBtn = document.getElementById('close-panel-btn');
+            const helpPanel = document.getElementById('help-panel');
+            const closeHelpBtn = document.getElementById('close-help-btn');
+
+            searchInput.addEventListener('input', () => {
+                const query = searchInput.value.toLowerCase();
+                if (query.length < 1) {
+                    searchResults.innerHTML = ''; searchResults.classList.add('hidden'); return;
+                }
+                const results = starSystems.filter(s => s.name.toLowerCase().includes(query)).slice(0, 5);
+                searchResults.innerHTML = results.map(r => `<div class="p-2 hover:bg-gray-700 cursor-pointer" data-id="${r.id}">${r.name}</div>`).join('');
+                searchResults.classList.remove('hidden');
+            });
+            searchResults.addEventListener('click', (e) => {
+                if (e.target.dataset.id) {
+                    const systemId = parseInt(e.target.dataset.id);
+                    const system = starSystems.find(s => s.id === systemId);
+                    if (system) selectSystem(system);
+                    searchInput.value = ''; searchResults.classList.add('hidden');
+                }
+            });
+            document.addEventListener('click', (e) => { if (!searchInput.contains(e.target)) searchResults.classList.add('hidden'); });
+
+            document.getElementById('zoom-in-btn').addEventListener('click', () => {
+                zoomToPoint(1.2, window.innerWidth / 2, window.innerHeight / 2);
+            });
+            document.getElementById('zoom-out-btn').addEventListener('click', () => {
+                zoomToPoint(1 / 1.2, window.innerWidth / 2, window.innerHeight / 2);
+            });
+
+            document.getElementById('reset-view-btn').addEventListener('click', () => {
+                if (isWarping) return;
+                camera.position.set(0, 700, 1100);
+                controls.target.set(0, 0, 0);
+            });
+            menuBtn.addEventListener('click', () => infoPanel.classList.remove('-translate-x-[120%]'));
+            closePanelBtn.addEventListener('click', () => infoPanel.classList.add('-translate-x-[120%]'));
+            closeHelpBtn.addEventListener('click', () => {
+                helpPanel.style.opacity = '0';
+                setTimeout(() => helpPanel.style.display = 'none', 500);
+            });
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
