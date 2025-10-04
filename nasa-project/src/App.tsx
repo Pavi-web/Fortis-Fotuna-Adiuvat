@@ -50,7 +50,6 @@ function App() {
         <div className="header-content">
           <div className="header-left">
             <h1>Cosmic Explorer</h1>
-            <p className="subtitle">NASA Space Apps Challenge</p>
           </div>
           <div className="header-right">
             <div className="user-info">
@@ -83,7 +82,7 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>Prototype demonstrating NASA imagery exploration + 3D simulation navigation</p>
+        <p>Ohh Nothing beyond this! Stay tuned for more! 😉</p>
       </footer>
     </div>
   );

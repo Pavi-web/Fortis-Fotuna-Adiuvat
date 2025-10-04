@@ -40,7 +40,7 @@ const OpenSeadragonViewer = ({ annotations, onAnnotationClick }: OpenSeadragonVi
     annotations.forEach((annotation) => {
       const overlay = document.createElement('div');
       overlay.className = 'annotation-marker';
-      overlay.innerHTML = '📍';
+      // overlay.innerHTML = '📍';
       overlay.title = annotation.title;
       
       overlay.onclick = () => onAnnotationClick(annotation);
