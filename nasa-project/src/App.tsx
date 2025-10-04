@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
+import { Login, Signup } from './pages/Login';
 import ImageExplorer from './pages/ImageExplorer';
 import SimulationExplorer from './pages/SimulationExplorer';
-import { User } from './types/types';
+import { User } from './types/types'
 import './styles.css';
 
 type Tab = 'image' | 'simulation';
@@ -50,8 +49,8 @@ function App() {
       <header className="app-header">
         <div className="header-content">
           <div className="header-left">
-            <h1>🌌 Cosmic Explorer</h1>
-            <p className="subtitle">NASA Space Apps Challenge Prototype</p>
+            <h1>Cosmic Explorer</h1>
+            <p className="subtitle">NASA Space Apps Challenge</p>
           </div>
           <div className="header-right">
             <div className="user-info">
