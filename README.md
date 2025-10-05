@@ -17,26 +17,24 @@ This dual design not only educates but also excites users by blending **science,
 https://1drv.ms/p/c/b299c4c6bae899e5/EXwGaQc5YT1GnAoXA_de3fsBJb9I0RwwblvHfV58ZxtSMQ?e=qpusjw
 
 # OUTPUT
-## Interactive User Interface ##
-![Screenshot 2024-10-06 082737](https://github.com/user-attachments/assets/0f3dbfc8-9ffd-421b-ad43-65d17ef8bf50)
+## Secured with login ##
+<img width="1919" height="1079" alt="Image" src="https://github.com/user-attachments/assets/6487509b-e7fc-421a-9704-6788a7261abe" />
 
-## 3-D Human Interactable JWST Model ##
-![Screenshot 2024-10-06 082847](https://github.com/user-attachments/assets/0824fdb4-2bc9-4fe7-826f-57edd33fa64b)
+## 3-D Image Explorer ##
+<img width="1919" height="1079" alt="Image" src="https://github.com/user-attachments/assets/22a90aab-1412-40c8-9dff-7721a17eff33" />
 
-## Many categories of images ##
-![Screenshot 2024-10-06 082935](https://github.com/user-attachments/assets/cb07d8b3-a20e-4f0d-a042-0e51846de01c)
+## 3-D Image explorer with stars and exoplanets ##
+<img width="1919" height="1079" alt="Image" src="https://github.com/user-attachments/assets/dbe7a957-e555-44d3-8091-c645749f44ae" />
 
-## JWST image slideshow with Mood based Music player ##
-![Screenshot 2024-10-06 082948](https://github.com/user-attachments/assets/668dde9a-91c6-45fa-acce-266aa363bfb2)
+## Simulation Explorer ##
+<img width="1919" height="1079" alt="Image" src="https://github.com/user-attachments/assets/5ee09407-6e04-4bfa-b3da-bc17817e0aea" />
 
-## Interactive Quizes for user learning ##
-![Screenshot 2024-10-06 082909](https://github.com/user-attachments/assets/9d84f5e0-7c7d-441e-8994-7d22a6f2bf7a)
+## Simulation Explorer with animation ##
+<img width="1919" height="1079" alt="Image" src="https://github.com/user-attachments/assets/8027da7f-f574-4489-ba8c-2f2ad1820c86" />
 
-## Interactive 3-D model of space with required details of each planet ##
-![Screenshot 2024-10-06 083215](https://github.com/user-attachments/assets/3ac948f3-af26-4944-b955-4df2fa422eb4)
+## Simulation Explorer with stars  ##
+<img width="1919" height="1079" alt="Image" src="https://github.com/user-attachments/assets/d282e226-4e27-4d7b-88a5-0a668b5e422f" />
 
-## Feedback form for future reference ##
-![Screenshot 2024-10-06 090316](https://github.com/user-attachments/assets/185f2963-c3df-4538-92fa-a09daf833b6b)
 
 # What exactly does it do?
 
